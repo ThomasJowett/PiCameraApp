@@ -17,11 +17,10 @@ class CameraApp(tk.Tk):
         preview_config = self.picam2.create_preview_configuration(main={"size":(640, 480)})
         self.capture_config = self.picam2.create_still_configuration()
         self.picam2.configure(preview_config)
-        self.picam2.start_preview(Preview.QTGL, x=0, y=0)
+        self.picam2.start_preview(Preview.QTGL)
         self.picam2.start()
         
         self.title("Camera App")
-        #self.attributes('-fullscreen', True)
         
         self.capture_button = tk.Button(self, text="Take Picture", command=self.take_picture)
         self.capture_button.pack(expand=True)
@@ -29,12 +28,22 @@ class CameraApp(tk.Tk):
         
     def take_picture(self):
         try:
-            current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{current_time}.jpg"
-            filepath = os.path.join(pictures_folder, filename)
             image = self.picam2.switch_mode_and_capture_image(self.capture_config)
-            print(f"Image saved as: {filepath}")
+            request = self.picam2.capture_request()
+            metadata = request.get_metadata()
+            
+            sensor_timestamp_ns = metadata['SensorTimestamp']
+            timestamp = datetime.fromtimestamp(sensor_timestamp_ns / 1e9)
+            
+            filename_timestamp = timestamp.strftime("%Y%m%d_%H%M%S")
+            filename = f"{filename_timestamp}.jpg"
+            filepath = os.path.join(pictures_folder, filename)
+            
+            #image = request.make_image("main")
             image.save(filepath)
+            
+            request.release()
+            print(f"Image saved as: {filepath}")
         except Exception as e:
             messagebox.showerror("Error", f"Failed to capture image:\n{e}")
             
@@ -44,11 +53,11 @@ class CameraApp(tk.Tk):
         
     def close(self):
         self.picam2.close()
-        self.master.destroy()
+        self.destroy()
     
 if __name__ == '__main__':
     app = CameraApp()
     try:
         app.mainloop()
-    except KeyboardInterupt:
+    except KeyboardInterrupt:
         app.close()
