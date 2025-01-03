@@ -54,9 +54,12 @@ class CameraApp(QtWidgets.QMainWindow):
         # Start the camera preview
         self.picam2.start()
         
-        # Create a container for button and label
+        # Create a container for button and label        
         button_container = QtWidgets.QWidget(self)
         button_layout = QtWidgets.QHBoxLayout(button_container)
+        
+        self.exit_button = QtWidgets.QPushButton("Exit")
+        self.exit_button.clicked.connect(self.close)
         
         # Create a button to take pictures
         self.capture_button = QtWidgets.QPushButton("Take Picture", self)
@@ -68,6 +71,7 @@ class CameraApp(QtWidgets.QMainWindow):
         self.filepath_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         
         button_layout.addWidget(self.filepath_label)
+        button_layout.addWidget(self.exit_button)
         button_layout.addWidget(self.capture_button)
         self.statusBar().addPermanentWidget(button_container)  # Add button to status bar
         
