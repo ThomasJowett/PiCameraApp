@@ -2,8 +2,9 @@ import sys
 from PyQt5 import QtCore, QtWidgets, QtGui
 from picamera2 import Picamera2
 from picamera2.previews.qt import QGlPicamera2
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
+import time
 
 pictures_folder = os.path.join(os.path.expanduser("~"), "Pictures")
 os.makedirs(pictures_folder, exist_ok=True)
@@ -19,8 +20,14 @@ class CaptureThread(QtCore.QThread):
     def run(self):
         try:
             image = self.picam2.switch_mode_and_capture_image(self.capture_config)
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{timestamp}.jpg"
+            request = self.picam2.capture_request()
+            metadata = request.get_metadata()
+            sensor_timestamp_ns = metadata['SensorTimestamp']
+            uptime_s = time.clock_gettime(time.CLOCK_MONOTONIC)
+            boot_time = datetime.now() - timedelta(seconds=uptime_s)
+            timestamp = boot_time + timedelta(seconds = sensor_timestamp_ns / 1e9)
+            filename_timestamp = timestamp.strftime("%Y%m%d_%H%M%S")
+            filename = f"{filename_timestamp}.jpg"
             filepath = os.path.join(pictures_folder, filename)
             image.save(filepath)
             print(f"Image saved as: {filepath}")
