@@ -8,11 +8,32 @@ import os
 pictures_folder = os.path.join(os.path.expanduser("~"), "Pictures")
 os.makedirs(pictures_folder, exist_ok=True)
 
+class CaptureThread(QtCore.QThread):
+    image_captured = QtCore.pyqtSignal(str)
+    
+    def __init__(self, picam2, parent=None):
+        super().__init__(parent)
+        self.picam2 = picam2
+        self.capture_config = self.picam2.create_still_configuration()
+        
+    def run(self):
+        try:
+            image = self.picam2.switch_mode_and_capture_image(self.capture_config)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{timestamp}.jpg"
+            filepath = os.path.join(pictures_folder, filename)
+            image.save(filepath)
+            print(f"Image saved as: {filepath}")
+            self.image_captured.emit(filepath)
+        except Exception as e:
+            self.image_captured.emit(f"Error: {e}")
+            
 class CameraApp(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         
         self.picam2 = Picamera2()
+        self.capture_config = self.picam2.create_still_configuration()
         self.picam2.configure(self.picam2.create_preview_configuration(main={"size": (800, 480)}))
 
         # Create the Qt preview window
@@ -32,17 +53,22 @@ class CameraApp(QtWidgets.QMainWindow):
         self.statusBar().addPermanentWidget(self.capture_button)  # Add button to status bar
 
         self.show()
+        
+        self.capture_thread = None
 
     def take_picture(self):
-        try:
-            image = self.picam2.switch_mode_and_capture_image()
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"{timestamp}.jpg"
-            filepath = os.path.join(pictures_folder, filename)
-            image.save(filepath)
-            print(f"Image saved as: {filepath}")
-        except Exception as e:
-            QtWidgets.QMessageBox.critical(self, "Error", f"Failed to capture image:\n{e}")
+        self.capture_button.setEnabled(False)
+        self.capture_thread = CaptureThread(self.picam2)
+        self.capture_thread.image_captured.connect(self.on_image_captured)
+        self.capture_thread.start()
+        
+    def on_image_captured(self, filepath):
+        self.capture_button.setEnabled(True)
+        if filepath.startswith("Error:"):
+           QtWidgets.QMessageBox.critical(self, "Error", filepath)
+        else:
+           QtWidgets.QMessageBox.information(self, "Image Saved", f"Image saved as: {filepath}")
+
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
