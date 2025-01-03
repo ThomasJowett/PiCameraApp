@@ -17,13 +17,20 @@ class CameraApp(tk.Tk):
         preview_config = self.picam2.create_preview_configuration(main={"size":(640, 480)})
         self.capture_config = self.picam2.create_still_configuration()
         self.picam2.configure(preview_config)
+        #self.picam2.start_preview(Preview.QTGL, fullscreen=True)
         self.picam2.start_preview(Preview.QTGL)
         self.picam2.start()
         
         self.title("Camera App")
+        #self.frame = tk.Frame(self)
+        #self.frame.pack(fill="both", expand=True)
         
-        self.capture_button = tk.Button(self, text="Take Picture", command=self.take_picture)
-        self.capture_button.pack(expand=True)
+        self.capture_button = tk.Button(self, text="Take Picture", command=self.take_picture,
+                                        font=("Ariel", 16),
+                                        width=10, height=3)
+        self.capture_button.pack(side="right", fill="both", expand=True)
+        #self.attributes("-topmost", True)
+        #self.attributes("-fullscreen", True)
         self.bind("<Escape>", self.exit_fullscreen)
         
     def take_picture(self):
@@ -39,7 +46,6 @@ class CameraApp(tk.Tk):
             filename = f"{filename_timestamp}.jpg"
             filepath = os.path.join(pictures_folder, filename)
             
-            #image = request.make_image("main")
             image.save(filepath)
             
             request.release()
