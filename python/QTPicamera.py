@@ -47,6 +47,7 @@ class CameraApp(QtWidgets.QMainWindow):
         # Create the Qt preview window
         self.qpicamera2 = QGlPicamera2(self.picam2, width=800, height=480, keep_ar=False)
         self.qpicamera2.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # Make it frameless
+        self.qpicamera2.setAspectRatioMode(QtCore.Qt.KeepAspectRatio)
 
         self.setCentralWidget(self.qpicamera2)
         self.setWindowState(QtCore.Qt.WindowFullScreen)  # Set to fullscreen
