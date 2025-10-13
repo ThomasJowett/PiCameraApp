@@ -41,8 +41,8 @@ class CameraApp(QtWidgets.QMainWindow):
         super().__init__()
         
         self.picam2 = Picamera2()
-        self.capture_config = self.picam2.create_still_configuration()
-        self.picam2.configure(self.picam2.create_preview_configuration(main={"size": (800, 480)}, keep_ar=True))
+        self.capture_config = self.picam2.create_still_configuration(self.picam2, width=800, height=480, keep_ar=True)
+        self.picam2.configure(self.picam2.create_preview_configuration(main={"size": (800, 480)}))
 
         # Create the Qt preview window
         self.qpicamera2 = QGlPicamera2(self.picam2, width=800, height=480, keep_ar=False)
