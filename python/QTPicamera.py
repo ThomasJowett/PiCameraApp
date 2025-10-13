@@ -45,7 +45,7 @@ class CameraApp(QtWidgets.QMainWindow):
         # Detect the screen size and set the preview size accordingly
         screen = QtWidgets.QApplication.primaryScreen()
         screen_size = screen.size()
-        width, height = screen_size.width(), screen_size.height() - 50
+        width, height = screen_size.width(), screen_size.height() - 75
         self.capture_config = self.picam2.create_still_configuration()
         self.picam2.configure(self.picam2.create_preview_configuration(main={"size": (width, height)}))
 
