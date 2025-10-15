@@ -5,6 +5,8 @@ from picamera2.previews.qt import QGlPicamera2
 from datetime import datetime, timedelta
 import os
 import time
+import cv2
+import numpy as np
 
 pictures_folder = os.path.join(os.path.expanduser("~"), "Pictures")
 os.makedirs(pictures_folder, exist_ok=True)
@@ -36,6 +38,37 @@ class CaptureThread(QtCore.QThread):
         except Exception as e:
             self.image_captured.emit(f"Error: {e}")
 
+class SharpnessThread(QtCore.QThread):
+    sharpness_updated = QtCore.pyqtSignal(float)
+
+    def __init__(self, picam2, interval = 1.0, parent=None):
+        super().__init__(parent)
+        self.picam2 = picam2
+        self.running = True
+        self.interval = interval
+    
+    def run(self):
+        while self.running:
+            try:
+                image = self.picam2.capture_array()
+
+                if image is None:
+                    continue
+                gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                h, w = gray.shape
+                cx, cy = w // 2, h // 2
+                size_x, size_y = w // 6, h // 6
+                crop = gray[cy - size_y:cy + size_y, cx - size_x:cx + size_x]
+                laplacian = cv2.Laplacian(crop, cv2.CV_64F).var()
+                sharpness = min(100, laplacian / 100.0)
+                self.sharpness_updated.emit(sharpness)
+            except Exception as e:
+                print(f"Error calculating sharpness: {e}")
+            self.msleep(int(self.interval * 1000))
+
+    def stop(self):
+        self.running = False
+        self.wait()
 class CameraApp(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
@@ -58,6 +91,11 @@ class CameraApp(QtWidgets.QMainWindow):
         
         # Start the camera preview
         self.picam2.start()
+
+        # Start the sharpness monitoring thread
+        self.sharpness_thread = SharpnessThread(self.picam2)
+        self.sharpness_thread.sharpness_updated.connect(self.update_sharpness_display)
+        self.sharpness_thread.start()
         
         # Create a container for button and label        
         button_container = QtWidgets.QWidget(self)
@@ -98,6 +136,12 @@ class CameraApp(QtWidgets.QMainWindow):
            QtWidgets.QMessageBox.critical(self, "Error", filepath)
         else:
            self.filepath_label.setText(f"{filepath}")
+
+    def closeEvent(self, event):
+        if hasattr(self, "sharpness_thread"):
+            self.sharpness_thread.stop()
+        self.picam2.stop()
+        event.accept()
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
