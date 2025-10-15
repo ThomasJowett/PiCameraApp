@@ -94,7 +94,7 @@ class CameraApp(QtWidgets.QMainWindow):
 
         # Start the sharpness monitoring thread
         self.sharpness_thread = SharpnessThread(self.picam2)
-        self.sharpness_thread.sharpness_updated.connect(self.update_sharpness_display)
+        # self.sharpness_thread.sharpness_updated.connect(self.update_sharpness_display)
         self.sharpness_thread.start()
         
         # Create a container for button and label        
