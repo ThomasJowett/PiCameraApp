@@ -60,7 +60,7 @@ class SharpnessThread(QtCore.QThread):
                 size_x, size_y = w // 6, h // 6
                 crop = gray[cy - size_y:cy + size_y, cx - size_x:cx + size_x]
                 laplacian = cv2.Laplacian(crop, cv2.CV_64F).var()
-                sharpness = min(100, laplacian / 100.0)
+                sharpness = np.clip((np.log10(laplacian + 1) / 3.0) * 100, 0, 100)
                 self.sharpness_updated.emit(sharpness)
             except Exception as e:
                 print(f"Error calculating sharpness: {e}")
