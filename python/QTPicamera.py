@@ -94,12 +94,17 @@ class CameraApp(QtWidgets.QMainWindow):
 
         # Start the sharpness monitoring thread
         self.sharpness_thread = SharpnessThread(self.picam2)
-        # self.sharpness_thread.sharpness_updated.connect(self.update_sharpness_display)
+        self.sharpness_thread.sharpness_updated.connect(self.update_sharpness_display)
         self.sharpness_thread.start()
         
         # Create a container for button and label        
         button_container = QtWidgets.QWidget(self)
         button_layout = QtWidgets.QHBoxLayout(button_container)
+
+        # Create a label for displaying the sharpness
+        self.sharpness_label = QtWidgets.QLabel("Sharpness: --%", self)
+        self.sharpness_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        button_layout.addWidget(self.sharpness_label)
         
         self.exit_button = QtWidgets.QPushButton("Exit")
         self.exit_button.clicked.connect(self.close)
@@ -122,6 +127,9 @@ class CameraApp(QtWidgets.QMainWindow):
         
         self.capture_thread = None
         self.image_process_thread = None
+
+    def update_sharpness_display(self, value):
+        self.sharpness_label.setText(f"Sharpness: {value:.1f}%")
 
     def take_picture(self):
         self.capture_button.setEnabled(False)
